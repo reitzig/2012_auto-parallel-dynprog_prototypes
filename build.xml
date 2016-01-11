@@ -1,0 +1,87 @@
+<project name="dpprot" basedir="." default="dist">
+  <property name="src" location="src"/>
+  <property name="buildroot" location="build"/>
+  <property name="build" location="${buildroot}/main"/>
+  <property name="test-build" location="${buildroot}/test"/>
+  <property name="lib" location="lib/"/>
+  <property name="test" location="test"/>
+  <property name="test-reports" location="test-reports"/>
+  <property name="dist" location="dist"/>
+
+  <target name="clean">
+    <delete dir="${buildroot}"/>
+    <delete dir="${build}"/>
+    <delete dir="${test-build}"/>
+    <delete dir="${test-reports}"/>
+    <delete dir="${dist}"/>
+  </target>
+
+  <target name="compile">
+    <mkdir dir="${build}"/>
+    <javac srcdir="${src}" destdir="${build}" compiler="javac1.6">
+      <classpath>
+        <fileset dir="${lib}">
+          <include name="**/*.jar" />
+        </fileset>
+      </classpath>
+    </javac>
+
+    <unjar dest="${build}">
+      <fileset dir="${lib}">
+          <include name="*.jar"/>
+          <exclude name="junit-4.10.jar"/>
+      </fileset>
+    </unjar>
+    <delete dir="${build}/META-INF"/>
+  </target>
+
+  <target name="test-compile" depends="compile">
+    <mkdir dir="${test-build}"/>
+    <javac srcdir="${test}" destdir="${test-build}" compiler="javac1.6" debug="on">
+      <classpath>
+        <fileset dir="${lib}">
+          <include name="**/*.jar" />
+        </fileset>
+        <pathelement location="${build}"/>
+      </classpath>
+    </javac>
+  </target>
+
+  <target name="test" depends="test-compile">
+    <mkdir dir="${test-reports}"/>
+    <junit printsummary="no">
+      <assertions>
+        <enable/>
+      </assertions>
+      <classpath>
+        <fileset dir="${lib}">
+          <include name="**/*.jar" />
+        </fileset>
+        <pathelement location="${test-build}"/>
+        <pathelement location="${build}"/>
+      </classpath>
+      <batchtest todir="${test-reports}">
+        <fileset dir="${test}">
+          <include name="**/*Test.java"/>
+          <exclude name="**/DiagonalFrontierTest.java" />
+        </fileset>
+        <formatter type="plain"/>
+      </batchtest>
+    </junit>
+  </target>
+
+  <target name="dist" depends="compile" description="generate the distribution">
+    <!-- Create the distribution directory -->
+    <mkdir dir="${dist}"/>
+
+    <manifest file="MANIFEST.MF">
+      <attribute name="Main-Class" value="de/unikl/reitzig/paralleldynprog/prototypes/Benchmark"/>
+    </manifest>
+
+    <jar jarfile="${dist}/dpprot.jar" manifest="MANIFEST.MF" excludes="**/*.java">
+      <fileset dir="${build}" includes="**/*"/>
+    </jar>
+
+    <delete file="MANIFEST.MF"/>
+  </target>
+</project>
